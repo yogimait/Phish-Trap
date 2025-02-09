@@ -6,10 +6,10 @@
 
 from sklearn.tree import _tree  # Import the private _tree module from scikit-learn
 
-# Function to convert a decision tree to JSON format for easier visualization
+# This function converts data to JSON FORMAT
 def tree_to_json(tree):
-    tree_ = tree.tree_  # Get the underlying tree structure
-    # Assuming we have 30 features in our dataset
+    tree_ = tree.tree_  
+    # Lets say we have 30 dates
     feature_names = range(30)
     
     # Map feature indices to feature names, handle undefined features
