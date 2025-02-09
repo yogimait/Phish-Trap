@@ -1,0 +1,19 @@
+{
+  "name": "PhishTrap",
+  "version": "1.0.0",
+  "description": "A phishing detector plugin",
+  "permissions": ["activeTab","declarativeContent", "storage", "webNavigation","tabs"],
+  "background": {
+    "service_worker": "js/bg-loader.js"
+  },
+  "action": {
+    "default_popup": "plugin_ui.html"
+  },
+  "content_scripts":[
+    {
+      "matches": ["http://*/*","https://*/*"],
+      "js": ["js/features.js"]
+    }
+  ],
+  "manifest_version": 3
+}
