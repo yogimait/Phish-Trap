@@ -1,0 +1,83 @@
+{
+    "defaultAction": "SCMP_ACT_ERRNO",
+    "architectures": [
+        "SCMP_ARCH_X86_64",
+        "SCMP_ARCH_X86",
+        "SCMP_ARCH_AARCH64"
+    ],
+    "syscalls": [
+        {
+            "names": [
+                "read",
+                "write",
+                "fstat",
+                "mmap",
+                "munmap",
+                "brk",
+                "rt_sigaction",
+                "rt_sigprocmask",
+                "rt_sigreturn",
+                "access",
+                "prctl",
+                "clone",
+                "setgid",
+                "setuid",
+                "setgroups",
+                "open",
+                "close",
+                "readlink",
+                "getdents",
+                "stat",
+                "openat",
+                "socket",
+                "connect",
+                "sendto",
+                "recvfrom",
+                "poll",
+                "epoll_create1",
+                "epoll_ctl",
+                "epoll_wait",
+                "pipe",
+                "pipe2",
+                "ioctl",
+                "getpid",
+                "gettid",
+                "exit",
+                "exit_group",
+                "chdir",
+                "fcntl",
+                "futex",
+                "getdents64",
+                "getcwd",
+                "getegid",
+                "geteuid",
+                "getgid",
+                "getuid",
+                "lseek",
+                "mkdir",
+                "clock_gettime",
+                "nanosleep",
+                "pselect6",
+                "shmget",
+                "shmat",
+                "shmdt",
+                "shmctl"
+            ],
+            "action": "SCMP_ACT_ALLOW",
+            "args": []
+        },
+        {
+            "names": [
+                "kill"
+            ],
+            "action": "SCMP_ACT_ALLOW",
+            "args": [
+                {
+                    "index": 1,
+                    "value": 0,
+                    "op": "SCMP_CMP_EQ"
+                }
+            ]
+        }
+    ]
+}

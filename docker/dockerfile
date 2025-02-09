@@ -1,0 +1,94 @@
+FROM debian:bookworm-slim
+
+
+RUN useradd -m -d /home/sandbox sandbox \
+    && mkdir -p /home/sandbox/.vnc \
+    && mkdir -p /var/log/supervisor \
+    && chown -R sandbox:sandbox /home/sandbox \
+    && chown -R sandbox:sandbox /var/log/supervisor
+
+
+ENV TZ=Asia/Kolkata
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    tzdata \
+    chromium \
+    tigervnc-standalone-server \
+    tigervnc-tools \
+    x11vnc \
+    novnc \
+    websockify \
+    xvfb \
+    supervisor \
+    openbox \
+    ca-certificates \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /home/sandbox/docker/sandbox/app \
+    && mkdir -p /etc/sudoers.d
+
+
+RUN echo '{"": {"token": "", "target": "localhost:5901"}}' > /home/sandbox/websockify.cfg && \
+    echo $'<!DOCTYPE html>\n\
+<html>\n\
+<head>\n\
+    <title>noVNC</title>\n\
+    <meta charset="utf-8">\n\
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n\
+</head>\n\
+<body style="margin: 0; padding: 0; height: 100vh; overflow: hidden;">\n\
+    <iframe src="vnc_lite.html?autoconnect=true" style="width: 100%; height: 100%; border: none;"></iframe>\n\
+    <script>\n\
+        document.addEventListener("DOMContentLoaded", function() {\n\
+            const iframe = document.querySelector("iframe");\n\
+            if (iframe.contentWindow.connect) {\n\
+                iframe.contentWindow.connect();\n\
+            }\n\
+        });\n\
+    </script>\n\
+</body>\n\
+</html>' > /usr/share/novnc/index.html && \
+    chown sandbox:sandbox /home/sandbox/websockify.cfg && \
+    chmod 644 /usr/share/novnc/index.html
+
+
+RUN touch /var/log/supervisor/novnc.err.log /var/log/supervisor/novnc.out.log && \
+    chown -R sandbox:sandbox /var/log/supervisor/*.log
+
+
+RUN echo '#!/bin/bash\nexec "$@"' > /entrypoint.sh \
+    && chmod +x /entrypoint.sh
+
+RUN echo $'#!/bin/bash\necho "$1" > /tmp/url.txt\npkill chromium' > /home/sandbox/handle_url.sh \
+    && chmod +x /home/sandbox/handle_url.sh
+
+COPY --chown=sandbox:sandbox supervisor.conf /etc/supervisor/conf.d/supervisor.conf
+COPY --chown=sandbox:sandbox seccomp-profile.json /seccomp-profile.json
+
+# Set file permissions
+RUN chmod 600 /seccomp-profile.json \
+    && echo 'sandbox ALL=(ALL) NOPASSWD: /usr/bin/supervisorctl' > /etc/sudoers.d/sandbox \
+    && chmod 440 /etc/sudoers.d/sandbox \
+    && echo 'Defaults        !passwd_compatible' >> /etc/sudoers.d/sandbox \
+    && chmod 440 /etc/sudoers.d/sandbox
+
+
+WORKDIR /home/sandbox/docker/sandbox/app
+
+# Expose ports for VNC and noVNC
+EXPOSE 5901 6080
+
+# Switch to non-root user
+USER sandbox
+
+# Environment variables for VNC
+ENV DISPLAY=:1 \
+    RESOLUTION=1024x768 \
+    VNC_PORT=5901 \
+    NOVNC_PORT=6080
+
+
+ENTRYPOINT ["/entrypoint.sh"]
+
+# Use supervisor as the main process
+CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisor.conf"]
